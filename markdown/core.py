@@ -71,7 +71,7 @@ class Markdown:
         self.tab_length = kwargs.get('tab_length', 4)
 
         self.ESCAPED_CHARS = ['\\', '`', '*', '_', '{', '}', '[', ']',
-                              '(', ')', '>', '#', '+', '-', '.', '!']
+                              '(', ')', '>', '#', '+', '-', '.', '!', '•']
 
         self.block_level_elements = BLOCK_LEVEL_ELEMENTS.copy()
 
