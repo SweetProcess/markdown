@@ -328,7 +328,7 @@ class OListProcessor(BlockProcessor):
     # Lazy ol - ignore startswith
     LAZY_OL = True
     # List of allowed sibling tags.
-    SIBLING_TAGS = ['ol', 'ul']
+    SIBLING_TAGS = ['ol']
 
     def __init__(self, parser):
         super().__init__(parser)
@@ -434,6 +434,7 @@ class UListProcessor(OListProcessor):
     """ Process unordered list blocks. """
 
     TAG = 'ul'
+    SIBLING_TAGS = ['ul']
 
     def __init__(self, parser):
         super().__init__(parser)
