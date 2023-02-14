@@ -10,7 +10,21 @@ class TestSweetprocess(unittest.TestCase):
 
     def setUp(self):
         """ Create instance of Markdown. """
-        self.md = markdown.Markdown(tab_length=2)
+        self.md = markdown.Markdown()
 
-    def test_sample_text(self):
-        print(self.md.convert(test_text.replace('•', '  •')))
+    def test_sample_list_text(self):
+        # print(self.md.convert(test_text.replace('•', '  •')))
+        print(self.md.convert(test_text))
+
+    def test_wrapped_unindented_list_text(self):
+        print(self.md.convert("""
+        \n\nYou might want to start with this:
+        \n\n1. one
+        \n\n2. two
+        \n\nWhat is going on in here? I have no idea what is going on here.
+        \n\n- two
+        \n\n* three
+        \n\nThen you migth want to do this:
+        \n\n1. this
+        \n\n2. that
+        """))
