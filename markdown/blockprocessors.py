@@ -351,15 +351,19 @@ class OListProcessor(BlockProcessor):
 
         if sibling is not None and sibling.tag in self.SIBLING_TAGS:
             subsibling = self.lastChild(sibling)
+            if subsibling is not None:
+                subsubsibling = self.lastChild(subsibling)
+            else:
+                subsubsibling = None
             if sibling.tag == self.TAG or (
-                    subsibling is not None and subsibling.tag in self.SIBLING_TAGS
+                    subsubsibling is not None and subsubsibling.tag in self.SIBLING_TAGS
             ):
                 if sibling.tag == self.TAG:
                     # Previous block was a list item, so set that as parent
                     lst = sibling
                 else:
                     # subsibling was a list item, so set that as parent
-                    lst = subsibling
+                    lst = subsubsibling
                 # make sure previous item is in a p- if the item has text,
                 # then it isn't in a p
                 if lst[-1].text:
@@ -384,11 +388,11 @@ class OListProcessor(BlockProcessor):
                 firstitem = items.pop(0)
                 self.parser.parseBlocks(li, [firstitem])
                 self.parser.state.reset()
-            else:
+            elif subsibling is not None:
                 # if the list is not indented, but suddenly - there's a different TAG
                 # that is supposed to be generated (ul changes to ol or ol changes to
                 # ul) - assume that
-                lst = etree.SubElement(sibling, self.TAG)
+                lst = etree.SubElement(subsibling, self.TAG)
                 # Check if a custom start integer is set
                 if not self.LAZY_OL and self.STARTSWITH != '1':
                     lst.attrib['start'] = self.STARTSWITH
