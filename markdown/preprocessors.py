@@ -35,6 +35,7 @@ def build_preprocessors(md, **kwargs):
     preprocessors = util.Registry()
     preprocessors.register(NormalizeWhitespace(md), 'normalize_whitespace', 30)
     preprocessors.register(HtmlBlockPreprocessor(md), 'html_block', 20)
+    preprocessors.register(ListReformatPreprocessor(md), 'list_reformat', 20)
     return preprocessors
 
 
@@ -57,6 +58,15 @@ class Preprocessor(util.Processor):
 
         """
         pass  # pragma: no cover
+
+
+class ListReformatPreprocessor(Preprocessor):
+    """ Normalize whitespace for consistent parsing. """
+
+    def run(self, lines):
+        source = '\n'.join(lines)
+        source = source.replace('•', "+")
+        return source.split('\n')
 
 
 class NormalizeWhitespace(Preprocessor):
