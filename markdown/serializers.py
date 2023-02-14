@@ -35,8 +35,8 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 # OF THIS SOFTWARE.
 # --------------------------------------------------------------------
-
-
+import json
+import uuid
 from xml.etree.ElementTree import ProcessingInstruction
 from xml.etree.ElementTree import Comment, ElementTree, QName
 import re
@@ -187,3 +187,77 @@ def to_html_string(element):
 
 def to_xhtml_string(element):
     return _write_html(ElementTree(element).getroot(), format="xhtml")
+
+
+def step(title: str, content: str, n: int) -> "ProcedureStepType":
+    return {
+        "title": str(title).strip(),
+        "n": n,
+        "id": uuid.uuid4().hex,
+        "files": [],
+        "fields": [],
+        "images": [],
+        "type": "content",
+        "content": str(content).strip(),
+    }
+
+
+def _unwrap_text(element):
+    text = element.text
+    if text is not None and text.strip():
+        return element.text
+    else:
+        return ''.join(_unwrap_text(e) for e in element)
+
+
+sentence_regex = re.compile(r"(?<=\w\.\.\. )|(?<=\w\. )|(?<=\w\? )|(?<=\w! )|(?<=\w: )")
+
+
+def _generate_step_from_xml(element, n):
+    if len(element) <= 1:
+        text = _unwrap_text(element)
+        sentences = sentence_regex.split(text)
+
+        title = f"{sentences[0]}".strip()
+        if title.endswith(":"):
+            title = title[: (len(title) - 1)]
+        content = "".join(sentences[1:])
+
+        return step(title, content, n)
+    else:
+        text = _unwrap_text(element[0])
+
+        sentences = sentence_regex.split(text)
+        title = f"{sentences[0]}".strip()
+        if title.endswith(":"):
+            title = title[: (len(title) - 1)]
+        content = "".join(sentences[1:])
+
+        data = []
+        write = data.append
+        for e in element[1:]:
+            _serialize_html(write, e, 'html')
+        html_content = ''.join(data).replace('\n', '')
+        content = f"{content} {html_content}"
+        return step(title, content, n)
+
+
+def _write_steps(write, element, i_offset):
+    if len(element) <= 1:
+        write(_generate_step_from_xml(element, 1 + i_offset))
+    else:
+        for i, e in enumerate(element):
+            write(_generate_step_from_xml(e, i + 1 + i_offset))
+
+
+def _write_sweetprocess(element):
+    data = []
+    write = data.append
+    for i, e in enumerate(element):
+        _write_steps(write, e, i)
+    return data
+
+
+def to_sweetprocess_string(element):
+    data = _write_sweetprocess(ElementTree(element).getroot())
+    return json.dumps(data)

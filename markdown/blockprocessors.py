@@ -350,32 +350,52 @@ class OListProcessor(BlockProcessor):
         sibling = self.lastChild(parent)
 
         if sibling is not None and sibling.tag in self.SIBLING_TAGS:
-            # Previous block was a list item, so set that as parent
-            lst = sibling
-            # make sure previous item is in a p- if the item has text,
-            # then it isn't in a p
-            if lst[-1].text:
-                # since it's possible there are other children for this
-                # sibling, we can't just SubElement the p, we need to
-                # insert it as the first item.
-                p = etree.Element('p')
-                p.text = lst[-1].text
-                lst[-1].text = ''
-                lst[-1].insert(0, p)
-            # if the last item has a tail, then the tail needs to be put in a p
-            # likely only when a header is not followed by a blank line
-            lch = self.lastChild(lst[-1])
-            if lch is not None and lch.tail:
-                p = etree.SubElement(lst[-1], 'p')
-                p.text = lch.tail.lstrip()
-                lch.tail = ''
+            subsibling = self.lastChild(sibling)
+            if subsibling is not None:
+                subsubsibling = self.lastChild(subsibling)
+            else:
+                subsubsibling = None
+            if sibling.tag == self.TAG or (
+                    subsubsibling is not None and subsubsibling.tag in self.SIBLING_TAGS
+            ):
+                if sibling.tag == self.TAG:
+                    # Previous block was a list item, so set that as parent
+                    lst = sibling
+                else:
+                    # subsibling was a list item, so set that as parent
+                    lst = subsubsibling
+                # make sure previous item is in a p- if the item has text,
+                # then it isn't in a p
+                if lst[-1].text:
+                    # since it's possible there are other children for this
+                    # sibling, we can't just SubElement the p, we need to
+                    # insert it as the first item.
+                    p = etree.Element('p')
+                    p.text = lst[-1].text
+                    lst[-1].text = ''
+                    lst[-1].insert(0, p)
+                # if the last item has a tail, then the tail needs to be put in a p
+                # likely only when a header is not followed by a blank line
+                lch = self.lastChild(lst[-1])
+                if lch is not None and lch.tail:
+                    p = etree.SubElement(lst[-1], 'p')
+                    p.text = lch.tail.lstrip()
+                    lch.tail = ''
 
-            # parse first block differently as it gets wrapped in a p.
-            li = etree.SubElement(lst, 'li')
-            self.parser.state.set('looselist')
-            firstitem = items.pop(0)
-            self.parser.parseBlocks(li, [firstitem])
-            self.parser.state.reset()
+                # parse first block differently as it gets wrapped in a p.
+                li = etree.SubElement(lst, 'li')
+                self.parser.state.set('looselist')
+                firstitem = items.pop(0)
+                self.parser.parseBlocks(li, [firstitem])
+                self.parser.state.reset()
+            elif subsibling is not None:
+                # if the list is not indented, but suddenly - there's a different TAG
+                # that is supposed to be generated (ul changes to ol or ol changes to
+                # ul) - assume that
+                lst = etree.SubElement(subsibling, self.TAG)
+                # Check if a custom start integer is set
+                if not self.LAZY_OL and self.STARTSWITH != '1':
+                    lst.attrib['start'] = self.STARTSWITH
         elif parent.tag in ['ol', 'ul']:
             # this catches the edge case of a multi-item indented list whose
             # first item is in a blank parent-list item:
@@ -432,7 +452,6 @@ class OListProcessor(BlockProcessor):
 
 class UListProcessor(OListProcessor):
     """ Process unordered list blocks. """
-
     TAG = 'ul'
 
     def __init__(self, parser):

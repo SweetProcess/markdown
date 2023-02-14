@@ -30,7 +30,7 @@ from .treeprocessors import build_treeprocessors
 from .inlinepatterns import build_inlinepatterns
 from .postprocessors import build_postprocessors
 from .extensions import Extension
-from .serializers import to_html_string, to_xhtml_string
+from .serializers import to_html_string, to_xhtml_string, to_sweetprocess_string
 from .util import BLOCK_LEVEL_ELEMENTS
 
 __all__ = ['Markdown', 'markdown', 'markdownFromFile']
@@ -47,6 +47,7 @@ class Markdown:
     output_formats = {
         'html':   to_html_string,
         'xhtml':  to_xhtml_string,
+        'sweetprocess': to_sweetprocess_string,
     }
 
     def __init__(self, **kwargs):
@@ -71,13 +72,13 @@ class Markdown:
         self.tab_length = kwargs.get('tab_length', 4)
 
         self.ESCAPED_CHARS = ['\\', '`', '*', '_', '{', '}', '[', ']',
-                              '(', ')', '>', '#', '+', '-', '.', '!']
+                              '(', ')', '>', '#', '+', '-', '.', '!', '•']
 
         self.block_level_elements = BLOCK_LEVEL_ELEMENTS.copy()
 
         self.registeredExtensions = []
         self.docType = ""
-        self.stripTopLevelTags = True
+        self.stripTopLevelTags = False
 
         self.build_parser()
 
