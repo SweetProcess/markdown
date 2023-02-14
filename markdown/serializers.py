@@ -214,7 +214,7 @@ sentence_regex = re.compile(r"(?<=\w\.\.\. )|(?<=\w\. )|(?<=\w\? )|(?<=\w! )|(?<
 
 
 def _generate_step_from_xml(element, n):
-    if len(element) == 1:
+    if len(element) <= 1:
         text = _unwrap_text(element)
         sentences = sentence_regex.split(text)
 
@@ -242,21 +242,22 @@ def _generate_step_from_xml(element, n):
         return step(title, content, n)
 
 
-def _write_steps(write, element):
-    for i, e in enumerate(element):
-        write(_generate_step_from_xml(e, i + 1))
+def _write_steps(write, element, i_offset):
+    if len(element) <= 1:
+        write(_generate_step_from_xml(element, 1 + i_offset))
+    else:
+        for i, e in enumerate(element):
+            write(_generate_step_from_xml(e, i + 1 + i_offset))
 
 
 def _write_sweetprocess(element):
     data = []
     write = data.append
-    for e in element:
-        _write_steps(write, e)
+    for i, e in enumerate(element):
+        _write_steps(write, e, i)
     return data
 
 
 def to_sweetprocess_string(element):
     data = _write_sweetprocess(ElementTree(element).getroot())
-    from pprint import pprint
-    pprint(data)
     return json.dumps(data)
