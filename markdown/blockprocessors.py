@@ -349,10 +349,17 @@ class OListProcessor(BlockProcessor):
         items = self.get_items(blocks.pop(0))
         sibling = self.lastChild(parent)
 
-        if sibling is not None:
-            if sibling.tag == self.TAG:
-                # Previous block was a list item, so set that as parent
-                lst = sibling
+        if sibling is not None and sibling.tag in self.SIBLING_TAGS:
+            subsibling = self.lastChild(sibling)
+            if sibling.tag == self.TAG or (
+                    subsibling is not None and subsibling.tag in self.SIBLING_TAGS
+            ):
+                if sibling.tag == self.TAG:
+                    # Previous block was a list item, so set that as parent
+                    lst = sibling
+                else:
+                    # subsibling was a list item, so set that as parent
+                    lst = subsibling
                 # make sure previous item is in a p- if the item has text,
                 # then it isn't in a p
                 if lst[-1].text:
@@ -377,6 +384,14 @@ class OListProcessor(BlockProcessor):
                 firstitem = items.pop(0)
                 self.parser.parseBlocks(li, [firstitem])
                 self.parser.state.reset()
+            else:
+                # if the list is not indented, but suddenly - there's a different TAG
+                # that is supposed to be generated (ul changes to ol or ol changes to
+                # ul) - assume that
+                lst = etree.SubElement(sibling, self.TAG)
+                # Check if a custom start integer is set
+                if not self.LAZY_OL and self.STARTSWITH != '1':
+                    lst.attrib['start'] = self.STARTSWITH
         elif parent.tag in ['ol', 'ul']:
             # this catches the edge case of a multi-item indented list whose
             # first item is in a blank parent-list item:
@@ -435,7 +450,7 @@ class UListProcessor(OListProcessor):
     """ Process unordered list blocks. """
 
     TAG = 'ul'
-    SIBLING_TAGS = ['ul']
+    SIBLING_TAGS = ['ol', 'ul']
 
     def __init__(self, parser):
         super().__init__(parser)
