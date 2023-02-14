@@ -28,3 +28,13 @@ class TestSweetprocess(unittest.TestCase):
         \n\n1. this
         \n\n2. that
         """))
+
+    def test_weird_stuff(self):
+        print(self.md.convert("""
+        \n\nThis & that.
+        \n\n
+        \n\n4 < 5.
+        \n\n
+        \n\n6 > 5.
+        \n\n
+        """))
