@@ -187,3 +187,7 @@ def to_html_string(element):
 
 def to_xhtml_string(element):
     return _write_html(ElementTree(element).getroot(), format="xhtml")
+
+
+def to_sweetprocess_string(element):
+    return _write_html(ElementTree(element).getroot(), format="html")

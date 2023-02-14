@@ -10,7 +10,7 @@ class TestSweetprocess(unittest.TestCase):
 
     def setUp(self):
         """ Create instance of Markdown. """
-        self.md = markdown.Markdown()
+        self.md = markdown.Markdown(output_format='sweetprocess')
 
     def test_sample_list_text(self):
         # print(self.md.convert(test_text.replace('•', '  •')))
