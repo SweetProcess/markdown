@@ -35,8 +35,8 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 # OF THIS SOFTWARE.
 # --------------------------------------------------------------------
-
-
+import json
+import uuid
 from xml.etree.ElementTree import ProcessingInstruction
 from xml.etree.ElementTree import Comment, ElementTree, QName
 import re
@@ -175,6 +175,7 @@ def _write_html(root, format="html"):
     data = []
     write = data.append
     _serialize_html(write, root, format)
+    print(data)
     return "".join(data)
 
 
@@ -189,5 +190,65 @@ def to_xhtml_string(element):
     return _write_html(ElementTree(element).getroot(), format="xhtml")
 
 
+def step(title: str, content: str, n: int) -> "ProcedureStepType":
+    return {
+        "title": str(title).strip(),
+        "n": n,
+        "id": uuid.uuid4().hex,
+        "files": [],
+        "fields": [],
+        "images": [],
+        "type": "content",
+        "content": str(content).strip(),
+    }
+
+
+def _unwrap_text(element):
+    text = element.text
+    if text is not None and text.strip():
+        return element.text
+    else:
+        return ''.join(_unwrap_text(e) for e in element)
+
+sentence_regex = re.compile(r"(?<=\w\.\.\. )|(?<=\w\. )|(?<=\w\? )|(?<=\w! )|(?<=\w: )")
+
+
+def _generate_step_from_xml(element, n):
+    if len(element) == 1:
+        text = _unwrap_text(element)
+        sentences = sentence_regex.split(text)
+
+        title = f"{sentences[0]}".strip()
+        if title.endswith(":"):
+            title = title[: (len(title) - 1)]
+        content = "".join(sentences[1:])
+
+        return step(title, content, n)
+    else:
+        title = _unwrap_text(element[0])
+        data = []
+        write = data.append
+        for e in element[1:]:
+            _serialize_html(write, e, 'html')
+        content = ''.join(data).replace('\n', '')
+        return step(title, content, n)
+
+
+def _write_steps(write, element):
+    for i, e in enumerate(element):
+        write(_generate_step_from_xml(e, i))
+
+
+def _write_sweetprocess(element):
+    data = []
+    write = data.append
+    for e in element:
+        _write_steps(write, e)
+    return data
+
+
 def to_sweetprocess_string(element):
-    return _write_html(ElementTree(element).getroot(), format="html")
+    data = _write_sweetprocess(ElementTree(element).getroot())
+    from pprint import pprint
+    pprint(data)
+    return json.dumps(data)

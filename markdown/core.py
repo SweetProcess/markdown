@@ -78,7 +78,7 @@ class Markdown:
 
         self.registeredExtensions = []
         self.docType = ""
-        self.stripTopLevelTags = True
+        self.stripTopLevelTags = False
 
         self.build_parser()
 
